@@ -3,6 +3,7 @@ package db
 import (
 	"bytes"
 	"os"
+	"strings"
 )
 
 func cp(bz []byte) (ret []byte) {
@@ -48,4 +49,20 @@ func IsKeyInDomain(key, start, end []byte) bool {
 func FileExists(filePath string) bool {
 	_, err := os.Stat(filePath)
 	return !os.IsNotExist(err)
+}
+
+func parseOptParams(params string) map[string]string {
+	if len(params) == 0 {
+		return nil
+	}
+
+	opts := make(map[string]string)
+	for _, s := range strings.Split(params, ",") {
+		opt := strings.Split(s, "=")
+		if len(opt) != 2 {
+			panic("Invalid options parameter, like this 'block_size=4kb,statistics=true")
+		}
+		opts[strings.TrimSpace(opt[0])] = strings.TrimSpace(opt[1])
+	}
+	return opts
 }
