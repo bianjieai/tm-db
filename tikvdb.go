@@ -80,6 +80,9 @@ func (t *TikvDB) Get(key []byte) ([]byte, error) {
 
 	val, err := txn.Get(context.Background(), t.getTikvKey(key))
 	if err != nil {
+		if tikverr.IsErrNotFound(err) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return val, nil
