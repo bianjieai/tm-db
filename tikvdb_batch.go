@@ -30,12 +30,23 @@ func newTikvDBBatch(db *TikvDB, prefix string) *tikvDBBatch {
 
 // Set inserts the given value into the batch for later committing.
 func (b *tikvDBBatch) Set(key, value []byte) error {
+	if len(key) == 0 {
+		return errKeyEmpty
+	}
+	if value == nil {
+		return errValueNil
+	}
+
 	b.writes = append(b.writes, keyvalue{b.db.getTikvKey(key), value, false})
 	return nil
 }
 
 // Delete inserts the key removal into the batch for later committing.
 func (b *tikvDBBatch) Delete(key []byte) error {
+	if len(key) == 0 {
+		return errKeyEmpty
+	}
+
 	b.writes = append(b.writes, keyvalue{b.db.getTikvKey(key), nil, true})
 	return nil
 }
