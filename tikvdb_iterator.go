@@ -148,7 +148,7 @@ func (itr *tikvDBIterator) Key() (key []byte) {
 func (itr *tikvDBIterator) Value() (value []byte) {
 	// Value returns a copy of the current value.
 	itr.assertIsValid()
-	return cp(itr.source.Value())
+	return checkEmptyValue(itr.source.Value())
 }
 
 func (itr *tikvDBIterator) Error() error {
