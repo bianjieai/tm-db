@@ -69,7 +69,7 @@ func parseOptParams(params string) map[string]string {
 
 func checkEmptyValue(bz []byte) []byte {
 	if bytes.Equal(bz, emptyStringTag) {
-		return nil
+		return []byte("")
 	}
 	return cp(bz)
 }
