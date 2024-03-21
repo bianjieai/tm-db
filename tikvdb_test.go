@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/tikv/client-go/v2/txnkv"
 )
 
 var pdAddr = []string{"127.0.0.1:2379"}
@@ -130,4 +131,22 @@ func TestTikvReverseIter(t *testing.T) {
 	}
 	iter.Close()
 	//require.EqualValues(t, num, count)
+}
+
+func TestTikvIterScan(t *testing.T) {
+	txnClient, err := txnkv.NewClient(pdAddr)
+	require.NoError(t, err)
+
+	txn, err := txnClient.Begin()
+	require.NoError(t, err)
+
+	iter, err := txn.Iter(nil, nil)
+	require.NoError(t, err)
+
+	fmt.Println("start")
+	for ; iter.Valid(); iter.Next() {
+		fmt.Printf("key: %v, data: %v\n", string(iter.Key()), iter.Value())
+	}
+	iter.Close()
+	fmt.Println("end")
 }

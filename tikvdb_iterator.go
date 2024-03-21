@@ -142,7 +142,8 @@ func (itr *tikvDBIterator) Next() {
 func (itr *tikvDBIterator) Key() (key []byte) {
 	// Key returns a copy of the current key.
 	itr.assertIsValid()
-	return cp(itr.source.Key())
+	fullKey := itr.source.Key()
+	return fullKey[len(itr.prefix):]
 }
 
 func (itr *tikvDBIterator) Value() (value []byte) {
