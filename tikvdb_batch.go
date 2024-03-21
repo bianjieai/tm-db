@@ -37,7 +37,7 @@ func (b *tikvDBBatch) Set(key, value []byte) error {
 		return errValueNil
 	}
 
-	b.writes = append(b.writes, keyvalue{b.db.getTikvKey(key), value, false})
+	b.writes = append(b.writes, keyvalue{b.db.getTikvKey(key), setNotEmptyValue(value), false})
 	return nil
 }
 

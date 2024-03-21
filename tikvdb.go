@@ -10,6 +10,9 @@ import (
 	"github.com/tikv/client-go/v2/txnkv"
 )
 
+// value 为空的特殊标识
+var emptyStringTag = []byte("nilStr!")
+
 func init() {
 	dbCreator := func(name string, dir string) (DB, error) {
 		return NewTikvDB(name, dir)
@@ -85,7 +88,7 @@ func (t *TikvDB) Get(key []byte) ([]byte, error) {
 		}
 		return nil, err
 	}
-	return val, nil
+	return checkEmptyValue(val), nil
 }
 
 func (t *TikvDB) Has(key []byte) (bool, error) {
@@ -112,7 +115,7 @@ func (t *TikvDB) Set(key []byte, value []byte) error {
 	}
 	defer txn.Commit(context.Background())
 
-	return txn.Set(t.getTikvKey(key), value)
+	return txn.Set(t.getTikvKey(key), setNotEmptyValue(value))
 }
 
 func (t *TikvDB) SetSync(key []byte, value []byte) error {
