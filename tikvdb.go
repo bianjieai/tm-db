@@ -50,26 +50,24 @@ func NewTikvDBWithOpts(name string, dir string, pdAddrs []string, o ...txnkv.Cli
 	}
 
 	// Performs prefix data check. If the prefix exists, an error is returned.
-	has, err := database.Has(database.getTikvStateKey())
-	if err != nil {
-		return nil, err
-	}
-	if has {
-		return nil, fmt.Errorf("database '%s/%s' is already in use", dir, name)
-	}
-
-	txn, err := database.txn.Begin()
-	if err != nil {
-		return nil, err
-	}
-	err = txn.Set(database.getTikvStateKey(), []byte("1"))
-	if err != nil {
-		return nil, err
-	}
-	err = txn.Commit(context.Background())
-	if err != nil {
-		return nil, err
-	}
+	//txn, err := database.txn.Begin()
+	//if err != nil {
+	//	return nil, err
+	//}
+	//defer txn.Commit(context.Background())
+	//_, err = txn.Get(context.Background(), database.getTikvStateKey())
+	//if err == nil {
+	//	return nil, fmt.Errorf("database '%s/%s' is already in use", dir, name)
+	//}
+	//if err != nil {
+	//	if !tikverr.IsErrNotFound(err) {
+	//		return nil, fmt.Errorf("database '%s/%s' is already in use", dir, name)
+	//	}
+	//}
+	//err = txn.Set(database.getTikvStateKey(), []byte("1"))
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	return database, nil
 }
@@ -154,10 +152,12 @@ func (t *TikvDB) Close() error {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 
-	err := t.DeleteSync(t.getTikvStateKey())
+	txn, err := t.txn.Begin()
 	if err != nil {
 		return err
 	}
+	err = txn.Delete(t.getTikvStateKey())
+	err = txn.Commit(context.Background())
 	return t.txn.Close()
 }
 
@@ -228,5 +228,5 @@ func (t *TikvDB) getTikvKey(key []byte) []byte {
 }
 
 func (t *TikvDB) getTikvStateKey() []byte {
-	return []byte(fmt.Sprintf("%s-%s/tikv.state", t.dir, t.name))
+	return []byte(fmt.Sprintf("tikv.state/%s/%s/tikv.state", t.dir, t.name))
 }
