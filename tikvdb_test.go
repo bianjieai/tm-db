@@ -13,7 +13,7 @@ var pdAddr = []string{"127.0.0.1:2379"}
 //var pdAddr = []string{"192.168.0.166:2379"}
 
 func TestTikvDBNewTikvDB(t *testing.T) {
-	name := fmt.Sprintf("testname%x", randStr(12))
+	name := "application"
 	dir := fmt.Sprintf("testdir%x", randStr(12))
 
 	// Test we can't open the db twice for writing
