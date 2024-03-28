@@ -10,7 +10,7 @@ import (
 	"github.com/tikv/client-go/v2/txnkv"
 )
 
-// value 为空的特殊标识
+// value is a special identifier for null
 var emptyStringTag = []byte("nilStr!")
 
 func init() {
@@ -36,7 +36,7 @@ func NewTikvDB(name string, dir string) (*TikvDB, error) {
 	return NewTikvDBWithOpts(name, dir, addrs, nil)
 }
 
-func NewTikvDBWithOpts(name string, dir string, pdAddrs []string, o ...txnkv.ClientOpt) (*TikvDB, error) {
+func NewTikvDBWithOpts(name string, dir string, pdAddrs []string, _ ...txnkv.ClientOpt) (*TikvDB, error) {
 	// Initializing the tikv client
 	txnClient, err := txnkv.NewClient(pdAddrs)
 	if err != nil {
@@ -77,7 +77,9 @@ func (t *TikvDB) Get(key []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Commit(context.Background())
+	defer func() {
+		err = txn.Commit(context.Background())
+	}()
 
 	val, err := txn.Get(context.Background(), t.getTikvKey(key))
 	if err != nil {
@@ -86,7 +88,7 @@ func (t *TikvDB) Get(key []byte) ([]byte, error) {
 		}
 		return nil, err
 	}
-	return checkEmptyValue(val), nil
+	return checkEmptyValue(val), err
 }
 
 func (t *TikvDB) Has(key []byte) (bool, error) {
@@ -94,7 +96,9 @@ func (t *TikvDB) Has(key []byte) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	defer txn.Commit(context.Background())
+	defer func() {
+		err = txn.Commit(context.Background())
+	}()
 
 	_, err = txn.Get(context.Background(), t.getTikvKey(key))
 	if err == nil {
@@ -107,48 +111,54 @@ func (t *TikvDB) Has(key []byte) (bool, error) {
 }
 
 func (t *TikvDB) Set(key []byte, value []byte) error {
-	txn, err := t.txn.Begin()
-	if err != nil {
-		return err
-	}
-	defer txn.Commit(context.Background())
-
-	return txn.Set(t.getTikvKey(key), setNotEmptyValue(value))
+	return t.setKV(key, value)
 }
 
 func (t *TikvDB) SetSync(key []byte, value []byte) error {
+	return t.setKV(key, value)
+}
+
+func (t *TikvDB) setKV(key []byte, value []byte) error {
 	txn, err := t.txn.Begin()
 	if err != nil {
 		return err
 	}
+	defer func() {
+		err = txn.Commit(context.Background())
+	}()
 
-	err = txn.Set(t.getTikvKey(key), value)
-	err = txn.Commit(context.Background())
+	err = txn.Set(t.getTikvKey(key), setNotEmptyValue(value))
+	if err != nil {
+		return err
+	}
 	return err
 }
 
 func (t *TikvDB) Delete(key []byte) error {
-	txn, err := t.txn.Begin()
-	if err != nil {
-		return err
-	}
-	defer txn.Commit(context.Background())
-
-	return txn.Delete(t.getTikvKey(key))
+	return t.deleteKey(key)
 }
 
 func (t *TikvDB) DeleteSync(key []byte) error {
+	return t.deleteKey(key)
+}
+
+func (t *TikvDB) deleteKey(key []byte) error {
 	txn, err := t.txn.Begin()
 	if err != nil {
 		return err
 	}
+	defer func() {
+		err = txn.Commit(context.Background())
+	}()
 
 	err = txn.Delete(t.getTikvKey(key))
-	err = txn.Commit(context.Background())
+	if err != nil {
+		return err
+	}
 	return err
 }
 
-func (t *TikvDB) Close() error {
+func (t *TikvDB) Close() (err error) {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 
@@ -156,8 +166,13 @@ func (t *TikvDB) Close() error {
 	if err != nil {
 		return err
 	}
+	defer func() {
+		err = txn.Commit(context.Background())
+	}()
 	err = txn.Delete(t.getTikvStateKey())
-	err = txn.Commit(context.Background())
+	if err != nil {
+		return err
+	}
 	return t.txn.Close()
 }
 
@@ -170,14 +185,13 @@ func (t *TikvDB) Print() error {
 	if err != nil {
 		return err
 	}
-	defer itr.Close()
 
 	for ; itr.Valid(); itr.Next() {
 		key := itr.Key()
 		value := itr.Value()
 		fmt.Printf("[%X]:\t[%X]\n", key, value)
 	}
-	return nil
+	return itr.Close()
 }
 
 func (t *TikvDB) Stats() map[string]string {

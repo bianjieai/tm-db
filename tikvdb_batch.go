@@ -65,6 +65,9 @@ func (b *tikvDBBatch) write(_ bool) error {
 	if err != nil {
 		return err
 	}
+	defer func() {
+		err = txn.Commit(context.Background())
+	}()
 
 	for _, keyValue := range b.writes {
 		if keyValue.delete {
@@ -77,7 +80,7 @@ func (b *tikvDBBatch) write(_ bool) error {
 			return err
 		}
 	}
-	return txn.Commit(context.Background())
+	return err
 }
 
 // Close resets the batch for reuse.
