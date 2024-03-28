@@ -144,9 +144,12 @@ func TestTikvIterScan(t *testing.T) {
 	require.NoError(t, err)
 
 	fmt.Println("start")
+	count := 0
 	for ; iter.Valid(); iter.Next() {
 		fmt.Printf("key: %v, data: %v\n", string(iter.Key()), iter.Value())
+		count++
 	}
 	iter.Close()
+	fmt.Printf("count: %v\n", count)
 	fmt.Println("end")
 }
