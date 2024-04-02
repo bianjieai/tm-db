@@ -214,7 +214,6 @@ func (t *TikvDB) Iterator(start, end []byte) (Iterator, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Commit(context.Background())
 
 	return newTikvDBIterator(txn, []byte(t.tikvStoreKeyPrefix()), start, end, false)
 }
@@ -228,7 +227,6 @@ func (t *TikvDB) ReverseIterator(start, end []byte) (Iterator, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Commit(context.Background())
 
 	return newTikvDBIterator(txn, []byte(t.tikvStoreKeyPrefix()), start, end, true)
 }

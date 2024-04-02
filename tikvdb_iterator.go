@@ -2,6 +2,7 @@ package db
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 
 	"github.com/tikv/client-go/v2/tikv"
@@ -10,6 +11,7 @@ import (
 
 type tikvDBIterator struct {
 	source    tikv.Iterator
+	txn       *transaction.KVTxn
 	prefix    []byte
 	start     []byte
 	end       []byte
@@ -29,6 +31,7 @@ func newTikvDBIterator(txn *transaction.KVTxn, prefix []byte, start, end []byte,
 	//var staKey = byte('0')
 	var endKey = []byte("~")
 	var iterator = &tikvDBIterator{
+		txn:       txn,
 		prefix:    prefix,
 		start:     start,
 		end:       end,
@@ -158,7 +161,7 @@ func (itr *tikvDBIterator) Error() error {
 
 func (itr *tikvDBIterator) Close() error {
 	itr.source.Close()
-	return nil
+	return itr.txn.Commit(context.Background())
 }
 
 func (itr *tikvDBIterator) assertIsValid() {
