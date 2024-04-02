@@ -40,49 +40,35 @@ func newTikvDBIterator(txn *transaction.KVTxn, prefix []byte, start, end []byte,
 	}
 
 	// 反向迭代器中参数是开始的 key, 结束的 key 需要在 NEXT() 中进行过判断
+	var startKey []byte
 	if isReverse {
 		if end == nil {
-			iterator.getTikvKey(endKey)
+			startKey = iterator.getTikvKey(endKey)
+		} else {
+			startKey = iterator.getTikvKey(end)
+		}
+
+		source, err = txn.IterReverse(startKey)
+		if err != nil {
+			return nil, err
+		}
+
+		if !source.Valid() {
 			source, err = txn.IterReverse(iterator.getTikvKey(endKey))
 			if err != nil {
 				return nil, err
 			}
-		} else {
-			source, err = txn.IterReverse(iterator.getTikvKey(end))
-			if err != nil {
-				return nil, err
-			}
-
-			if !source.Valid() {
-				source, err = txn.IterReverse(iterator.getTikvKey(endKey))
-				if err != nil {
-					return nil, err
-				}
-			}
-			// TODO
-			//if source.Valid() {
-			//	eoakey := source.Key() // end or after key
-			//	if bytes.Compare(end, eoakey) <= 0 {
-			//		source.Next()
-			//	}
-			//} else {
-			//	source, err = txn.IterReverse(iterator.getTikvKey(endKey))
-			//	if err != nil {
-			//		return nil, err
-			//	}
-			//}
 		}
 	} else {
 		if start == nil {
-			source, err = txn.Iter(prefix, iterator.getTikvKey(endKey))
-			if err != nil {
-				return nil, err
-			}
+			startKey = iterator.getTikvKey(nil)
 		} else {
-			source, err = txn.Iter(iterator.getTikvKey(start), iterator.getTikvKey(endKey))
-			if err != nil {
-				return nil, err
-			}
+			startKey = iterator.getTikvKey(start)
+		}
+
+		source, err = txn.Iter(startKey, iterator.getTikvKey(endKey))
+		if err != nil {
+			return nil, err
 		}
 	}
 
