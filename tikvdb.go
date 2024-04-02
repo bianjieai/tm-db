@@ -11,7 +11,7 @@ import (
 )
 
 // value is a special identifier for null
-var emptyStringTag = []byte("nilStr!")
+var emptyStringTag = []byte("NULL")
 
 func init() {
 	dbCreator := func(name string, dir string) (DB, error) {
