@@ -11,7 +11,7 @@ import (
 )
 
 // value is a special identifier for null
-var emptyStringTag = []byte("nilStr!")
+var emptyStringTag = []byte("NULL")
 
 func init() {
 	dbCreator := func(name string, dir string) (DB, error) {
@@ -214,7 +214,6 @@ func (t *TikvDB) Iterator(start, end []byte) (Iterator, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Commit(context.Background())
 
 	return newTikvDBIterator(txn, []byte(t.tikvStoreKeyPrefix()), start, end, false)
 }
@@ -228,7 +227,6 @@ func (t *TikvDB) ReverseIterator(start, end []byte) (Iterator, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Commit(context.Background())
 
 	return newTikvDBIterator(txn, []byte(t.tikvStoreKeyPrefix()), start, end, true)
 }
