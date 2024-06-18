@@ -50,6 +50,7 @@ func NewTikvDBWithOpts(name string, dir string, pdAddrs []string, _ ...txnkv.Cli
 	}
 
 	// Performs prefix data check. If the prefix exists, an error is returned.
+	// TODO It should be judged by name == "Application" before processing
 	//txn, err := database.txn.Begin()
 	//if err != nil {
 	//	return nil, err
@@ -162,6 +163,7 @@ func (t *TikvDB) Close() (err error) {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 
+	// TODO It should be judged by name == "Application" before processing
 	txn, err := t.txn.Begin()
 	if err != nil {
 		return err
@@ -173,6 +175,7 @@ func (t *TikvDB) Close() (err error) {
 	if err != nil {
 		return err
 	}
+
 	return t.txn.Close()
 }
 

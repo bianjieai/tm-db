@@ -50,6 +50,10 @@ type dbCreator func(name string, dir string) (DB, error)
 
 var backends = map[BackendType]dbCreator{}
 
+func RegisterDB(backend BackendType, creator dbCreator, force bool) {
+	registerDBCreator(backend, creator, force)
+}
+
 func registerDBCreator(backend BackendType, creator dbCreator, force bool) {
 	_, ok := backends[backend]
 	if !force && ok {
