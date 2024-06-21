@@ -66,17 +66,3 @@ func parseOptParams(params string) map[string]string {
 	}
 	return opts
 }
-
-func checkEmptyValue(bz []byte) []byte {
-	if bytes.Equal(bz, emptyStringTag) {
-		return []byte("")
-	}
-	return cp(bz)
-}
-
-func setNotEmptyValue(bz []byte) []byte {
-	if len(bz) == 0 {
-		return emptyStringTag
-	}
-	return bz
-}
